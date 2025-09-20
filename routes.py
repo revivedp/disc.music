@@ -43,6 +43,14 @@ def add_to_queue():
 
     return redirect("/")
 
+@app.route('/play', methods=["POST"])
+def play():
+    socketio.emit(
+        "play"
+    )
+
+    return redirect("/")
+
 @app.route('/skip', methods=["POST"])
 def skip():
     socketio.emit(

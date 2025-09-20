@@ -188,19 +188,18 @@ def on_flask_queue_add(data):
             with queue_lock:
                 backend_queue.append(track)
             emit_queue_update()
-            run_coro_safe(ensure_playing())
     
     executor.submit(work)
-
-@sio.on("flask_play_music")
-def on_play_music(data):
-    if not data:
-        return
-    on_flask_queue_add({"music_link": data.get("music_link")})
 
 @sio.on("flask_request_queue")
 def on_request_queue():
     emit_queue_update()
+
+@sio.on("play")
+def on_play():
+    fut = run_coro_safe(ensure_playing())
+    if fut:
+        fut.add_done_callback(lambda f: f.exception())
 
 @sio.on("skip")
 def on_skip():
