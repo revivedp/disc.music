@@ -42,11 +42,28 @@
         <button type="submit">Stop</button>
     </form>
 
+    <div class="form-group d-flex align-items-center">
+        <label for="volume" class="mb-0 mr-2">Volume:</label>
+        <input
+            type="range"
+            id="volume"
+            name="volume"
+            min="0"
+            max="100"
+            value="50"
+            step="1"
+            class="custom-range"
+            style="max-width:300px;"
+        >
+        <output for="volume">50%</output>
+    </div>
+
     <h2>Queue</h2>
     <ul id="queue"></ul>
 
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="{{ url_for('static', filename='js/RenderQueue.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/VolumeSlider.js') }}"></script>
 
 </body>
 

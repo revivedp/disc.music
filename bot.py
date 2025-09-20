@@ -17,6 +17,8 @@ intents.message_content = True
 intents.voice_states = True
 voice_client = None
 
+desired_volume = 0.5
+
 bot = commands.Bot(command_prefix="!", intents=intents)
 _bot_thread = None
 
@@ -77,10 +79,7 @@ async def _make_source(filepath: str, is_url: bool):
     ffmpeg_opts = {"options": "-vn -loglevel error -hide_banner -nostdin"}
     if is_url:
         ffmpeg_opts["before_options"] = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
-    try:
-        return await discord.FFmpegOpusAudio.from_probe(filepath, **ffmpeg_opts)
-    except Exception:
-        return discord.FFmpegPCMAudio(filepath, **ffmpeg_opts)
+    return discord.FFmpegPCMAudio(filepath, **ffmpeg_opts)
 
 
 async def ensure_voice_connected():
@@ -123,6 +122,8 @@ async def ensure_playing():
     except Exception as e:
         print(f"FFmpeg source error: {e}")
         return
+
+    source = discord.PCMVolumeTransformer(source, volume=desired_volume)
 
     def _after(err):
         if err:
@@ -212,6 +213,20 @@ def on_stop():
     fut = run_coro_safe(stop_playback())
     if fut:
         fut.add_done_callback(lambda f: f.exception())
+
+@sio.on("flask_set_volume")
+def on_flask_set_volume(data):
+    global desired_volume, voice_client
+    try:
+        vol = int(data.get("volume", 50))
+        vol = max(0, min(100, vol))
+        desired_volume = vol / 100.0
+
+        src = getattr(voice_client, "source", None)
+        if src and hasattr(src, "volume"):
+            src.volume = desired_volume
+    except Exception as e:
+        print(f"[volume] set failed: {e}")
 
 if __name__ == "__main__":
     for _ in range(20):

@@ -70,3 +70,7 @@ def on_bot_queue_update(data):
 @socketio.on("flask_request_queue")
 def on_flask_request_queue():
     socketio.emit("flask_request_queue")
+
+@socketio.on("set_volume")
+def on_set_volume(data):
+    socketio.emit("flask_set_volume", data)
