@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <meta charset="UTF-8">
+    <title>discrpg - Your Discord Music Bot Controller!</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+
+    <form action="{{ url_for('send_ping') }}" method="POST">
+        <button type="submit">Ping...</button>
+    </form>
+
+    <h2>Bot Parameters</h2>
+
+
+    <form action="{{ url_for('start_bot') }}" method="POST">
+        <label>Token:</label>
+        <input type="password" id="bot_token" name="bot_token" required> <br>
+
+        <label>Text Channel ID:</label>
+        <input type="text" id="text_channel_id" name="text_channel_id" required> <br>
+
+        <label>Voice Channel ID:</label>
+        <input type="text" id="voice_channel_id" name="voice_channel_id" required> <br>
+        <button type="submit">Start Bot</button>
+    </form>
+
+    <h2>Music</h2>
+
+    <form action="{{ url_for('add_to_queue') }}" method="POST">
+        <label>Link:</label>
+        <input type="text" id="music_link" name="music_link" required> <br>
+        <button type="submit">Add</button>
+    </form>
+
+    <form action="{{ url_for('skip') }}" method="POST"> 
+        <button type="submit">Skip</button>
+    </form>
+
+    <form action="{{ url_for('stop') }}" method="POST">
+        <button type="submit">Stop</button>
+    </form>
+
+    <h2>Queue</h2>
+    <ul id="queue"></ul>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/RenderQueue.js') }}"></script>
+
+</body>
+
+</html>
