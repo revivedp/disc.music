@@ -1,4 +1,4 @@
-import socketio, discord, yt_dlp, asyncio
+import socketio, discord, yt_dlp, asyncio, time
 from discord.ext import commands
 from threading import Thread, Lock
 from pathlib import Path
@@ -10,7 +10,6 @@ from concurrent.futures import ThreadPoolExecutor
 # =======================================
 
 TOKEN = None
-TEXT_CHANNEL_ID = None
 VOICE_CHANNEL_ID = None
 
 intents = discord.Intents.default()
@@ -67,13 +66,22 @@ def download_track(link: str):
         return None
 
 def emit_queue_update():
-    titles = []
     with queue_lock:
-        titles = [item["title"] for item in list(backend_queue)]
+        titles = [item["title"] for item in backend_queue]
     try:
         sio.emit("bot_queue_update", {"titles": titles})
     except Exception as e:
         print(f"Emit error: {e}")
+
+async def _make_source(filepath: str, is_url: bool):
+    ffmpeg_opts = {"options": "-vn -loglevel error -hide_banner -nostdin"}
+    if is_url:
+        ffmpeg_opts["before_options"] = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
+    try:
+        return await discord.FFmpegOpusAudio.from_probe(filepath, **ffmpeg_opts)
+    except Exception:
+        return discord.FFmpegPCMAudio(filepath, **ffmpeg_opts)
+
 
 async def ensure_voice_connected():
     global voice_client
@@ -96,44 +104,22 @@ async def ensure_voice_connected():
 async def ensure_playing():
 
     await ensure_voice_connected()
-    if not voice_client:
-        return
-    if voice_client.is_playing():
+    if not voice_client or voice_client.is_playing():
         return
 
-    next_item = None
     with queue_lock:
-        if backend_queue:
-            next_item = backend_queue.popleft()
+        next_item = backend_queue.popleft() if backend_queue else None
     if not next_item:
         return
 
     filepath = next_item["filepath"]
-    title = next_item["title"]  # corrigido
+    title = next_item["title"]
 
     emit_queue_update()
 
-    # Use reconnect somente para URLs remotas
     is_url = isinstance(filepath, str) and filepath.startswith(("http://", "https://"))
-    ffmpeg_opts = {
-        "options": "-vn -loglevel error -hide_banner -nostdin",
-    }
-    if is_url:
-        ffmpeg_opts["before_options"] = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
-
     try:
-        # Para arquivos locais .webm/.opus/.ogg, tente opus primeiro
-        if not is_url and filepath.endswith((".webm", ".opus", ".ogg")):
-            try:
-                source = await discord.FFmpegOpusAudio.from_probe(filepath, **ffmpeg_opts)
-            except Exception:
-                source = discord.FFmpegPCMAudio(filepath, **ffmpeg_opts)
-        else:
-            # URL ou outros formatos -> PCM (ou from_probe se preferir)
-            try:
-                source = await discord.FFmpegOpusAudio.from_probe(filepath, **ffmpeg_opts)
-            except Exception:
-                source = discord.FFmpegPCMAudio(filepath, **ffmpeg_opts)
+        source = await _make_source(filepath, is_url)
     except Exception as e:
         print(f"FFmpeg source error: {e}")
         return
@@ -151,10 +137,9 @@ async def skip_track():
     if voice_client and (voice_client.is_playing() or voice_client.is_paused()):
         voice_client.stop()
         return
-    await ensure_playing
+    await ensure_playing()
     
 async def stop_playback(disconnect: bool = False):
-    # Limpa a fila antes de parar para evitar race com o 'after'
     with queue_lock:
         backend_queue.clear()
     emit_queue_update()
@@ -181,12 +166,11 @@ def receive_message(data):
 def start_bot(data):
     if not data:
         return
-    global TOKEN, TEXT_CHANNEL_ID, VOICE_CHANNEL_ID, _bot_thread
+    global TOKEN, VOICE_CHANNEL_ID, _bot_thread
     if _bot_thread and _bot_thread.is_alive():
         return
 
     TOKEN = data['bot_token']
-    TEXT_CHANNEL_ID = int(data['text_channel_id'])
     VOICE_CHANNEL_ID = int(data['voice_channel_id'])
     _bot_thread = Thread(target=_run_bot, daemon=True)
     _bot_thread.start()
@@ -230,5 +214,13 @@ def on_stop():
         fut.add_done_callback(lambda f: f.exception())
 
 if __name__ == "__main__":
-    sio.connect("http://127.0.0.1:5000", wait_timeout=5)
+    for _ in range(20):
+        try:
+            sio.connect("http://127.0.0.1:5000", wait_timeout=5)
+            break
+        except Exception as e:
+            print(f"[socketio] connect failed: {e}; retrying...")
+            time.sleep(0.5)
+    else:
+        raise SystemExit(1)
     sio.wait()

@@ -18,14 +18,12 @@ def send_ping():
 @app.route('/start_bot', methods=["POST"])
 def start_bot():
     token = request.form.get("bot_token")
-    text_channel_id = request.form.get("text_channel_id")
     voice_channel_id = request.form.get("voice_channel_id")
 
     socketio.emit(
         "flask_start_bot", 
         {
             "bot_token": token,
-            "text_channel_id": text_channel_id,
             "voice_channel_id": voice_channel_id
         }
     )

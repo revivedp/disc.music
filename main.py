@@ -11,32 +11,28 @@ python_exec = sys.executable
 
 def clean_cache():
     for d in (CACHE_DIR, PYCACHE_DIR):
-        try:
-            if os.path.exists(d):
-                shutil.rmtree(d, ignore_errors=True)
-        except Exception:
-            pass
+        shutil.rmtree(d, ignore_errors=True)
 
 clean_cache()
 atexit.register(clean_cache)
 
-server_proc = subprocess.Popen([python_exec, SERVER_PATH])
-bot_proc = subprocess.Popen([python_exec, BOT_PATH])
+PROCS = [
+    subprocess.Popen([python_exec, SERVER_PATH]),
+    subprocess.Popen([python_exec, BOT_PATH]),
+]
 
 def terminate_children():
-    for p in (server_proc, bot_proc):
+    for p in PROCS:
+        if not p or p.poll() is not None:
+            continue
         try:
-            if p and p.poll() is None:
-                p.terminate()
-                try:
-                    p.wait(timeout=5)
-                except Exception:
-                    try:
-                        p.kill()
-                    except Exception:
-                        pass
+            p.terminate()
+            p.wait(timeout=5)
         except Exception:
-            pass
+            try:
+                p.kill()
+            except Exception:
+                pass
 
 def handle_signal(signum, frame):
     terminate_children()
@@ -50,8 +46,8 @@ except Exception:
     pass
 
 try:
-    server_proc.wait()
-    bot_proc.wait()
+    for p in PROCS:
+        p.wait()
 finally:
     terminate_children()
     clean_cache()
