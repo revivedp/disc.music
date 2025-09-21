@@ -51,6 +51,14 @@ def play():
 
     return redirect("/")
 
+@app.route('/pause', methods=["POST"])
+def pause():
+    socketio.emit(
+        "pause"
+    )
+
+    return redirect("/")
+
 @app.route('/skip', methods=["POST"])
 def skip():
     socketio.emit(

@@ -154,6 +154,24 @@ async def stop_playback(disconnect: bool = False):
         except Exception as e:
             print(f"[voice] disconnect error: {e}")
 
+async def pause_playback():
+    if voice_client and voice_client.is_playing():
+        voice_client.pause()
+
+async def play_or_resume():
+    await ensure_voice_connected()
+
+    if not voice_client:
+        return
+    
+    if hasattr(voice_client, "is_paused") and voice_client.is_paused():
+        voice_client.resume()
+        return
+    if voice_client.is_playing():
+        return
+    
+    await ensure_playing()
+
 # =======================================
 #               Socket.IO
 # =======================================
@@ -197,7 +215,13 @@ def on_request_queue():
 
 @sio.on("play")
 def on_play():
-    fut = run_coro_safe(ensure_playing())
+    fut = run_coro_safe(play_or_resume())
+    if fut:
+        fut.add_done_callback(lambda f: f.exception())
+
+@sio.on("pause")
+def on_pause():
+    fut = run_coro_safe(pause_playback())
     if fut:
         fut.add_done_callback(lambda f: f.exception())
 
