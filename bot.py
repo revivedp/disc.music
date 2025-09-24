@@ -36,6 +36,17 @@ def _run_bot():
 @bot.event
 async def on_ready():
     print(f'{bot.user} connected!')
+    try:
+        sio.emit("bot_status", {"online": True})
+    except Exception:
+        pass
+
+@bot.event
+async def on_disconnect():
+    try:
+        sio.emit("bot_status", {"online": False})
+    except Exception:
+        pass
 
 def run_coro_safe(coro):
     if bot.loop and bot.is_ready():

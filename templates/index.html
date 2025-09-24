@@ -10,6 +10,8 @@
 
 <body>
 
+    <div id="bot-status" class="alert alert-secondary" role="status">Bot Status: offline</div>
+
     <form action="{{ url_for('send_ping') }}" method="POST">
         <button type="submit">Ping...</button>
     </form>
@@ -72,6 +74,7 @@
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="{{ url_for('static', filename='js/RenderQueue.js') }}"></script>
     <script src="{{ url_for('static', filename='js/VolumeSlider.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/SetStatus.js') }}"></script>
 
 </body>
 

@@ -1,6 +1,9 @@
 from app import app, socketio
 from flask import render_template, redirect, request
 
+BOT_SID = None
+BOT_ONLINE = False
+
 
 # =======================================
 #               Flask Routes
@@ -78,6 +81,25 @@ def stop():
 # =======================================
 #               Socket.IO
 # =======================================
+
+@socketio.on("bot_status")
+def on_bot_status(data):
+    global BOT_SID, BOT_ONLINE
+    BOT_ONLINE = bool(data.get("online"))
+    BOT_SID = request.sid
+    socketio.emit("bot_status", {"online": BOT_ONLINE})
+
+@socketio.on("connect")
+def on_ws_connect():
+    socketio.emit("bot_status", {"online": BOT_ONLINE}, to=request.sid)
+
+@socketio.on("disconnect")
+def on_ws_disconnect():
+    global BOT_SID, BOT_ONLINE
+    if request.sid == BOT_SID:
+        BOT_SID = None
+        BOT_ONLINE = False
+        socketio.emit("bot_status", {"online": False})
 
 @socketio.on("bot_queue_update")
 def on_bot_queue_update(data):
