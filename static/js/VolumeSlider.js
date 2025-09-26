@@ -1,34 +1,57 @@
 (function() {
-    const socket = window.socket || io();
-    window.socket = socket;
+  const socket = window.socket || (window.socket = io());
 
-    const slider = document.getElementById('volume');
-    const out = slider ? slider.nextElementSibling : null;
-    if(!slider || !out) return;
+  const slider = document.getElementById('volume');
+  const out = slider ? slider.nextElementSibling : null;
+  if(!slider || !out) return;
 
-    const key = 'ui.volume';
-    const saved = localStorage.getItem(key);
-    if (saved !== null && !Number.isNaN(parseInt(saved, 10))){
-        slider.value = String(Math.max(0, Math.min(100, parseInt(saved, 10))));
-    }
+  const KEY = 'ui.volume';
 
-    const reflect = () => { out.textContent = slider.value + '%'; };
-    reflect()
+  function clamp(v){
+    v = parseInt(v,10);
+    if(isNaN(v)) v = 50;
+    return Math.max(0, Math.min(100, v));
+  }
 
-    let throttle;
-    const emitVolume = () => {
-        if (throttle) return;
-        throttle = setTimeout( () => {throttle = null; }, 100 );
-        const vol = Math.max(0, Math.min(100, parseInt(slider.value || '0', 10)));
-        socket.emit('set_volume', {volume: vol});
-    }
+  function reflect(v){
+    out.textContent = v + '%';
+  }
 
-    slider.addEventListener('input', () => {
-        localStorage.setItem(key, slider.value);
-        reflect();
-        emitVolume();
-    });
+  // Inicial localStorage
+  const saved = localStorage.getItem(KEY);
+  if(saved !== null){
+    const val = clamp(saved);
+    slider.value = val;
+    reflect(val);
+  } else {
+    reflect(slider.value);
+  }
 
+  let throttle;
+  function emitVolume(){
+    if(throttle) return;
+    throttle = setTimeout(()=> throttle=null, 120);
+    const val = clamp(slider.value);
+    socket.emit('set_volume', { volume: val });
+  }
+
+  slider.addEventListener('input', ()=>{
+    const val = clamp(slider.value);
+    slider.value = val;
+    localStorage.setItem(KEY, String(val));
+    reflect(val);
     emitVolume();
-   
+  });
+
+  // Recebe estado do servidor ao conectar
+  socket.on('volume_state', data=>{
+    if(!data) return;
+    const val = clamp(data.volume);
+    slider.value = val;
+    localStorage.setItem(KEY, String(val));
+    reflect(val);
+  });
+
+  // Garante envio inicial (sincroniza bot)
+  emitVolume();
 })();

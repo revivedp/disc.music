@@ -2,135 +2,144 @@
 <html lang="en-us">
 
 <head>
-    <meta charset="UTF-8">
-    <title>discrpg - Your Discord Music Bot Controller!</title>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <meta charset="UTF-8">
+  <title>discrpg - Your Discord Music Bot Controller!</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
-<body class="cyber-bg theme-violet">
-    <div class="scanlines"></div>
+<body class="cyber-bg">
+  <div class="scanlines"></div>
 
-    <header class="topbar container-fluid">
-        <div class="d-flex align-items-center justify-content-between">
-            <h1 class="brand">
-                <span class="accent">disc</span>.music<span class="blink">_</span>
-            </h1>
-            <div id="bot-status" class="status-chip m-0" role="status" aria-live="polite">
-                <span class="dot dot-muted"></span>
-                <span class="label">Offline</span>
+  <header class="topbar container-fluid">
+    <div class="d-flex align-items-center justify-content-between">
+      <h1 class="brand">
+        <span class="accent">disc</span>.music<span class="blink">_</span>
+      </h1>
+      <div id="bot-status" class="status-chip m-0" role="status" aria-live="polite">
+        <span class="dot dot-muted"></span>
+        <span class="label">Offline</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container py-4">
+    <div class="row">
+      <!-- Bot Parameters -->
+      <section class="col-lg-4 mb-4">
+        <div class="panel">
+          <h2 class="panel-title"><span class="dot dot-cyan"></span> Bot Parameters</h2>
+
+          <form id="start-form" action="{{ url_for('start_bot') }}" method="POST" class="grid-form mb-3">
+            <label for="bot_token">Token</label>
+            <input type="password" id="bot_token" name="bot_token" required placeholder="Bot Token">
+
+            <label for="voice_channel_id">Voice Channel ID</label>
+            <input type="text" id="voice_channel_id" name="voice_channel_id" required placeholder="1234567890">
+
+            <div class="bot-actions">
+              <button id="start-btn" type="submit" class="btn-cyber">Start Bot</button>
+              <form id="disconnect-form" action="{{ url_for('disconnect_bot') }}" method="POST">
+                <button id="disconnect-btn" type="submit" class="btn-cyber" disabled>Disconnect</button>
+              </form>
             </div>
+          </form>
         </div>
-    </header>
+      </section>
 
-    <main class="container py-4">
-        <div class="row">
-            <!-- Left: Bot config -->
-            <section class="col-lg-4 mb-4">
-                <div class="panel">
-                    <h2 class="panel-title">
-                        <span class="dot dot-cyan"></span> Bot Parameters
-                    </h2>
-                    <form action="{{ url_for('send_ping') }}" method="POST" class="mb-3">
-                        <button class="btn-cyber btn-sm" type="submit">Ping...</button>
-                    </form>
+      <!-- Player -->
+      <section class="col-lg-5 mb-4">
+        <div class="panel">
+          <h2 class="panel-title"><span class="dot dot-magenta"></span> Player</h2>
 
-                    <form action="{{ url_for('start_bot') }}" method="POST" class="grid-form">
-                        <label for="bot_token">Token</label>
-                        <input type="password" id="bot_token" name="bot_token" required placeholder="Bot Token">
+          <form id="add-form" action="{{ url_for('add_to_queue') }}" method="POST" class="grid-form">
+            <label for="music_link">Add link</label>
+            <input type="text" id="music_link" name="music_link" required placeholder="https://youtu.be/...">
+            <div class="form-actions">
+              <button id="add-submit" type="submit" class="btn-cyber">Add to Queue</button>
+            </div>
+          </form>
 
-                        <label for="voice_channel_id">Voice Channel ID</label>
-                        <input type="text" id="voice_channel_id" name="voice_channel_id" required placeholder="1234567890">
+            <div class="controls d-flex align-items-center justify-content-center gap-2 mt-3 flex-wrap">
+              <form action="{{ url_for('play') }}" method="POST">
+                <button class="icon-btn" type="submit" title="Play">
+                  <svg viewBox="0 0 24 24" width="24" height="24"><polygon points="6,4 20,12 6,20" /></svg>
+                </button>
+              </form>
+              <form action="{{ url_for('pause') }}" method="POST">
+                <button class="icon-btn" type="submit" title="Pause">
+                  <svg viewBox="0 0 24 24" width="24" height="24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                </button>
+              </form>
+              <form action="{{ url_for('stop') }}" method="POST">
+                <button class="icon-btn" type="submit" title="Stop">
+                  <svg viewBox="0 0 24 24" width="24" height="24"><rect x="6" y="6" width="12" height="12"/></svg>
+                </button>
+              </form>
+              <form action="{{ url_for('skip') }}" method="POST">
+                <button class="icon-btn" type="submit" title="Skip">
+                  <svg viewBox="0 0 24 24" width="24" height="24">
+                    <polygon points="5,4 14,12 5,20"/>
+                    <rect x="16" y="4" width="3" height="16"/>
+                  </svg>
+                </button>
+              </form>
+              <button id="repeat-btn" class="icon-btn" type="button" title="Repeat Track">
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                  <path d="M4 7h11a4 4 0 0 1 0 8H6"/>
+                  <polyline points="6 3 4 7 6 11"/>
+                  <path d="M20 17H9a4 4 0 0 1 0-8h9"/>
+                  <polyline points="18 21 20 17 18 13"/>
+                </svg>
+              </button>
+            </div>
 
-                        <div class="form-actions">
-                            <button type="submit" class="btn-cyber">
-                                <span class="btn-glow"></span>
-                                Start Bot
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </section>
-            <section class="col-lg-5 mb-4">
-                <div class="panel">
-                    <h2 class="panel-title">
-                        <span class="dot dot-magenta"></span> Player
-                    </h2>
-
-                    <form action="{{ url_for('add_to_queue') }}" method="POST" class="grid-form">
-                        <label for="music_link">Add link</label>
-                        <input type="text" id="music_link" name="music_link" required placeholder="https://youtu.be/...">
-                        <div class="form-actions">
-                            <button type="submit" class="btn-cyber">
-                                <span class="btn-glow"></span>
-                                Add to Queue
-                            </button>
-                        </div>
-                    </form>
-
-                    <div class="controls d-flex align-items-center justify-content-center gap-2 mt-3">
-                        <form action="{{ url_for('play') }}" method="POST">
-                            <button class="icon-btn" type="submit" title="Play">
-                                <svg viewBox="0 0 24 24" width="24" height="24"><polygon points="6,4 20,12 6,20" /></svg>
-                            </button>
-                        </form>
-                        <form action="{{ url_for('pause') }}" method="POST">
-                            <button class="icon-btn" type="submit" title="Pause">
-                                <svg viewBox="0 0 24 24" width="24" height="24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-                            </button>
-                        </form>
-                        <form action="{{ url_for('stop') }}" method="POST">
-                            <button class="icon-btn" type="submit" title="Stop">
-                                <svg viewBox="0 0 24 24" width="24" height="24"><rect x="6" y="6" width="12" height="12"/></svg>
-                            </button>
-                        </form>
-                        <form action="{{ url_for('skip') }}" method="POST">
-                            <button class="icon-btn" type="submit" title="Skip">
-                                <svg viewBox="0 0 24 24" width="24" height="24"><polygon points="5,4 14,12 5,20"/><rect x="16" y="4" width="3" height="16"/></svg>
-                            </button>
-                        </form>
-                    </div>
-
-                    <div class="volume mt-4">
-                        <label for="volume">Volume</label>
-                        <div class="slider-row">
-                            <input
-                                type="range"
-                                id="volume"
-                                name="volume"
-                                min="0"
-                                max="100"
-                                value="50"
-                                step="1"
-                                class="slider-cyber"
-                            >
-                            <output for="volume" class="vol-out">50%</output>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section class="col-lg-3 mb-4">
-                <div class="panel">
-                    <h2 class="panel-title">
-                        <span class="dot dot-lime"></span> Queue
-                    </h2>
-                    <ul id="queue" class="queue-list"></ul>
-                </div>
-            </section>
+          <div class="volume mt-4">
+            <label for="volume">Volume</label>
+            <div class="slider-row">
+              <input type="range" id="volume" name="volume" min="0" max="100" value="50" step="1" class="slider-cyber">
+              <output for="volume" class="vol-out">50%</output>
+            </div>
+          </div>
         </div>
-    </main>
+      </section>
 
-    <footer class="container py-3 footer-note">
-        <small>UI prototype — neon/cyberpunk theme</small>
-    </footer>
+      <!-- Queue -->
+      <section class="col-lg-3 mb-4">
+        <div class="panel">
+          <h2 class="panel-title"><span class="dot dot-lime"></span> Queue</h2>
+          <ul id="queue" class="queue-list" aria-live="polite"></ul>
+          <small class="text-muted d-block mt-2" style="font-size:.7rem;">Arraste para reordenar. Ações: ▶ = Play Now • ✕ = Remover</small>
+        </div>
+      </section>
+    </div>
+  </main>
 
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <script src="{{ url_for('static', filename='js/RenderQueue.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/VolumeSlider.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/SetStatus.js') }}"></script>
+  <footer class="container py-3 footer-note">
+    <small>Copyright 2025 Renato "revivedp" Justino.</small>
+  </footer>
+
+  <script>
+    try{
+      const v = localStorage.getItem('ui.volume');
+      if(v!==null){
+        document.addEventListener('DOMContentLoaded', ()=>{
+          const s = document.getElementById('volume');
+          if(s){
+            const iv = Math.max(0,Math.min(100,parseInt(v,10)));
+            s.value = iv;
+            const o = s.nextElementSibling;
+            if(o) o.textContent = iv + '%';
+          }
+        });
+      }
+    }catch(e){}
+  </script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="{{ url_for('static', filename='js/RenderQueue.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/VolumeSlider.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/SetStatus.js') }}"></script>
 </body>
-
 </html>

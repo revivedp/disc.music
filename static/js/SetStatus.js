@@ -1,20 +1,41 @@
 (function () {
-    const socket = window.socket || io();
-    window.socket = socket;
+  const socket = window.socket || (window.socket = io());
 
-    function setStatus(online){
-        const root = document.getElementById('bot-status');
-        if (!root) return;
+  function el(id){ return document.getElementById(id); }
 
-        const dot = root.querySelector('.dot');
-        const label = root.querySelector('.label');
-
-        const isOn = !!online;
-        label.textContent = isOn ? 'Online' : 'Offline';
-
-        dot.classList.toggle('dot-lime', isOn);
-        dot.classList.toggle('dot-muted', !isOn);
+  function setStatus(online){
+    const chip = el('bot-status');
+    if(chip){
+      const dot = chip.querySelector('.dot');
+      const label = chip.querySelector('.label');
+      if(label) label.textContent = online ? 'Online' : 'Offline';
+      if(dot){
+        dot.classList.toggle('dot-lime', !!online);
+        dot.classList.toggle('dot-muted', !online);
+      }
     }
+    const form = el('start-form');
+    const startBtn = el('start-btn');
+    const discBtn = el('disconnect-btn');
+    const token = el('bot_token');
+    const chan = el('voice_channel_id');
+    if(form && startBtn && discBtn && token && chan){
+      if(online){
+        form.classList.add('locked');
+        token.disabled = true;
+        chan.disabled = true;
+        startBtn.disabled = true;
+        discBtn.disabled = false;
+      } else {
+        form.classList.remove('locked');
+        token.disabled = false;
+        chan.disabled = false;
+        startBtn.disabled = false;
+        discBtn.disabled = true;
+      }
+    }
+  }
 
-    socket.on('bot_status', (data) => setStatus(data && data.online));
+  socket.on('bot_status', d => setStatus(d && d.online));
+  socket.on('connect', ()=> socket.emit('request_status_ping'));
 })();
