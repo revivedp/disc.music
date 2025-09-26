@@ -5,10 +5,6 @@ from pathlib import Path
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 
-# =======================================
-#               Discord.py
-# =======================================
-
 TOKEN = None
 VOICE_CHANNEL_ID = None
 
@@ -182,10 +178,7 @@ async def play_or_resume():
         return
     
     await ensure_playing()
-
-# =======================================
-#               Socket.IO
-# =======================================
+    
 sio = socketio.Client()
 
 @sio.on("flask_send_ping")

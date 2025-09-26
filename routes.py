@@ -4,11 +4,6 @@ from flask import render_template, redirect, request
 BOT_SID = None
 BOT_ONLINE = False
 
-
-# =======================================
-#               Flask Routes
-# =======================================
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -77,10 +72,6 @@ def stop():
     )
 
     return redirect("/")
-
-# =======================================
-#               Socket.IO
-# =======================================
 
 @socketio.on("bot_status")
 def on_bot_status(data):
